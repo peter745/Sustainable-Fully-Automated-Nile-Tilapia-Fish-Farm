@@ -1,4 +1,3 @@
-//#include <OneWire. h>
 #include <DallasTemperature.h>
 #define oneWireBus 7
 #define heater 8
@@ -12,7 +11,6 @@ DallasTemperature sensors(&oneWire);
 #define sensorOut 6
 const int pumb1 = 10;
 const int pumb2 = 11;
-int t1=0,t2=0,t3=0,t4=0,t5=0,t6=0;
 int frequency = 0;
 void setup() {
   Serial.begin(9600);
@@ -35,6 +33,7 @@ void setup() {
 }
 
 void loop() {
+  // Detecting the frequency of each color within the RGB
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
   frequency = pulseIn(sensorOut, LOW);
@@ -59,10 +58,11 @@ void loop() {
   Serial.print(blue);
   Serial.println("  ");
   delay(100);
+  //Trying to detect a green Color
+  //If the green color is detected, the pumbs will work to replace 20% of the water the water
   if(green-red>50&&green-blue>50){
     digitalWrite(aerator, LOW);
     Serial.print("Green detected!");
-    t1 = (t1==0? millis(): t1);
     int c = analogRead(A0);
     while(c >= 400){
       digitalWrite(pumb1, LOW);
@@ -81,43 +81,30 @@ void loop() {
     }
   } else {
     digitalWrite(aerator, HIGH);
-    if(t1 != 0){
-      t2=millis();
-      Serial.print("time taken for the green color to be removed: "); Serial.println(t2-t1);
-      t1=0,t2=0;  
-    }
   }
+  // Measuring the temperature 
   sensors.requestTemperatures();
   float temperatureC = sensors.getTempCByIndex(0);
   Serial.print("Temperature in C: ");
   Serial.print(temperatureC);
+  // Calculating the Dissolved oxygen in the means of temperature
   float DO_22 = 8.9;
   float DO_final = DO_22+((22-temperatureC)*1.5/5.0);
   Serial.print(" Dissolved oxygen in mg/L: ");
   Serial.println(DO_final); 
+  // If the temperature is low, it will work out the heater
   if(temperatureC < 22){
     digitalWrite(heater,LOW);
-    t3 = (t3==0? millis(): t3);
     Serial.println("Low tempertaure detected: ");
   } else {
     digitalWrite(heater, HIGH);
-    if(t3!=0){
-      t4=millis();
-      Serial.print("time taken for the water to be Heated: "); Serial.println(t4-t3);
-      t3=0,t4=0;  
-    }
   }
+  // If the temperature is high, an aerator will work to compensate the lost dissolved oxygen
   if(temperatureC > 28){
    digitalWrite(aerator,LOW);
-   t5 = (t5==0? millis(): t5);
    Serial.println("High tempertaure detected! ");
   } else {
    digitalWrite(aerator,HIGH);   
-   if(t5!=0){
-      t6=millis();
-      Serial.print("time taken for the water to be : "); Serial.println(t6-t5);
-      t5=0,t6=0;  
-    }
   }
-  delay(1000);
+  delay(5000);
 }
